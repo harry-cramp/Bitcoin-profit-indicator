@@ -11,3 +11,7 @@ origin_btc_amount=0
 
 # origin_cash_paid: the original amount of money paid in the user's currency of choice
 origin_cash_paid=0
+
+# GPIO pin numbers for positive wires for red and green LEDs
+red_wire=12
+green_wire=18
