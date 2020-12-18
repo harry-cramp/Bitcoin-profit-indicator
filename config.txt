@@ -3,7 +3,7 @@
 # The user can change these values for their own use.
 
 # currency: the original currency that they used to buy bitcoin.
-# accepted values: GBP, USD, EUR
+# examples: GBP, USD, EUR 
 currency=GBP
 
 # origin_btc_amount: the original amount of BTC that they bought.
