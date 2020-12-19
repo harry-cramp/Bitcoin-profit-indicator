@@ -15,3 +15,7 @@ origin_cash_paid=0
 # GPIO pin numbers for positive wires for red and green LEDs
 red_wire=12
 green_wire=18
+
+# start/end_time: time of days (hours) when LEDs should shut off
+start_time=8
+end_time=23
