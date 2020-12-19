@@ -25,6 +25,9 @@ JSON_EXCHANGE_RATE_KEY = "Exchange Rate"
 
 ACCEPTED_NUMBER_CHARS = ".0123456789"
 
+# delay in seconds between making API calls
+CHECK_DELAY = 60
+
 redWire = 0
 greenWire = 0
 
@@ -37,6 +40,7 @@ def get_BTC_exchange_rate():
 	api_key = os.getenv("ALPHAVANTAGE_API_KEY")
 	# execute API call and get response
 	response = requests.get("https://www.alphavantage.co/query?from_currency=BTC&function=CURRENCY_EXCHANGE_RATE&to_currency=" + currency + "&apikey=" + api_key)
+	print("CHECKING STOCKS...")
 	response_string = response.text
 	print(response_string)
 
@@ -55,7 +59,18 @@ def get_BTC_exchange_rate():
 			number_encountered = False
 			break
 
-	return noisy_data[startIndex:endIndex]
+	exchange_rate = noisy_data[startIndex:endIndex]
+	print("CURRENT BTC EXCHANGE RATE IN " + currency + ": " + exchange_rate)
+
+	return float(exchange_rate)
+
+# retrieve the value of BTC relative to the user's original investment
+# i.e. if get_BTC_exchange_rate() = $20,000, originBTC = 0.5
+# then get_relative_BTC_value() = $10,000 
+def get_relative_BTC_value():
+	exchange_rate = get_BTC_exchange_rate()
+	divisor = float(1 / originBTC)
+	return exchange_rate / divisor
 
 def init():
 	GPIO.setwarnings(False)
@@ -70,7 +85,6 @@ def init():
 		# skip commented lines
 		if line[0] == CONFIG_SKIP_CHAR or not len(line.strip()):
 			continue
-		print("LINE: " + line)
 		pair = line.split("=")
 		configDict[pair[0]] = pair[1]
 
@@ -92,16 +106,20 @@ def init():
 	GPIO.setup(redWire, GPIO.OUT, initial=GPIO.LOW)
 	GPIO.setup(greenWire, GPIO.OUT, initial=GPIO.LOW)
 
-	print(get_BTC_exchange_rate())
+	print("ORIGIN BTC VALUE: " + str(originBTC))
+	print("ORIGIN CURRENCY: " + str(originCash))
+	print("RELATIVE CURRENT VALUE: " + str(get_relative_BTC_value()))
 
 def run():
 	while True:
-		GPIO.output(redWire, GPIO.HIGH)
-		GPIO.output(greenWire, GPIO.LOW)
-		sleep(1)
-		GPIO.output(redWire, GPIO.LOW)
-		GPIO.output(greenWire, GPIO.HIGH)
-		sleep(1)
+		if get_relative_BTC_value() >= originCash:
+			GPIO.output(redWire, GPIO.LOW)
+			GPIO.output(greenWire, GPIO.HIGH)
+		else:
+			GPIO.output(redWire, GPIO.HIGH)
+			GPIO.output(greenWire, GPIO.LOW)
+
+		sleep(CHECK_DELAY)
 
 # when program exits, disable LEDs
 def cleanup():
