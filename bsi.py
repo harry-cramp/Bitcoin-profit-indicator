@@ -29,7 +29,7 @@ JSON_EXCHANGE_RATE_KEY = "Exchange Rate"
 ACCEPTED_NUMBER_CHARS = ".0123456789"
 
 # delay in seconds between making API calls
-CHECK_DELAY = 60
+CHECK_DELAY = 120
 
 redWire = 0
 greenWire = 0
@@ -49,7 +49,7 @@ def get_BTC_exchange_rate():
 	# fetch API key from environment variables
 	api_key = os.getenv("ALPHAVANTAGE_API_KEY")
 	# execute API call and get response
-	response = requests.get("https://www.alphavantage.co/query?from_currency=BTC&function=CURRENCY_EXCHANGE_RATE&to_currency=" + currency + "&apikey=" + api_key)
+	response = requests.get("https://www.alphavantage.co/query?from_currency=BTC&function=CURRENCY_EXCHANGE_RATE&to_currency=" + str(currency) + "&apikey=" + str(api_key))
 	print("CHECKING STOCKS...")
 	response_string = response.text
 
@@ -128,7 +128,7 @@ def run():
 	while True:
 		# shut off LEDs between configured hours
 		current_hour = get_hour()
-		if current_hour <= start_time or current_hour >= end_time:
+		if current_hour < start_time or current_hour > end_time:
 			clear_LEDs()
 			continue
 
