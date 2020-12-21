@@ -30,6 +30,11 @@ ACCEPTED_NUMBER_CHARS = ".0123456789"
 
 # delay in seconds between making API calls
 CHECK_DELAY = 120
+# delay in red LED blinks when no connection
+NO_CONN_BLINK_DELAY = 0.5
+
+# count no connection LED blinks until it's time to retry API call
+blink_delay_acc = 0
 
 redWire = 0
 greenWire = 0
@@ -48,8 +53,15 @@ def get_hour():
 def get_BTC_exchange_rate():
 	# fetch API key from environment variables
 	api_key = os.getenv("ALPHAVANTAGE_API_KEY")
+
+	global connection_error
+
 	# execute API call and get response
-	response = requests.get("https://www.alphavantage.co/query?from_currency=BTC&function=CURRENCY_EXCHANGE_RATE&to_currency=" + str(currency) + "&apikey=" + str(api_key))
+	try:
+		response = requests.get("https://www.alphavantage.co/query?from_currency=BTC&function=CURRENCY_EXCHANGE_RATE&to_currency=" + str(currency) + "&apikey=" + str(api_key))
+	except requests.ConnectionError:
+		print("WARNING: API call failed")
+		return -1
 	print("CHECKING STOCKS...")
 	response_string = response.text
 
@@ -78,6 +90,8 @@ def get_BTC_exchange_rate():
 # then get_relative_BTC_value() = $10,000 
 def get_relative_BTC_value():
 	exchange_rate = get_BTC_exchange_rate()
+	if exchange_rate == -1:
+		return -1;
 	divisor = float(1 / originBTC)
 	return exchange_rate / divisor
 
@@ -131,8 +145,27 @@ def run():
 		if current_hour < start_time or current_hour > end_time:
 			clear_LEDs()
 			continue
+		
+		# get BTC current value relative to amount invested
+		value_BTC = get_relative_BTC_value()
 
-		if get_relative_BTC_value() >= originCash:
+		global blink_delay_acc
+
+		# if API call failed, blink red LED	
+		if value_BTC == -1:
+			clear_LEDs()
+			while blink_delay_acc < CHECK_DELAY:
+				red_wire_state = GPIO.input(redWire)
+				if red_wire_state:
+					GPIO.output(redWire, GPIO.LOW)
+				else:
+					GPIO.output(redWire, GPIO.HIGH)
+				sleep(NO_CONN_BLINK_DELAY)
+				blink_delay_acc += NO_CONN_BLINK_DELAY
+			blink_delay_acc = 0
+			continue
+
+		if value_BTC >= originCash:
 			GPIO.output(redWire, GPIO.LOW)
 			GPIO.output(greenWire, GPIO.HIGH)
 		else:
