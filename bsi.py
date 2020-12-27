@@ -142,7 +142,7 @@ def run():
 	while True:
 		# shut off LEDs between configured hours
 		current_hour = get_hour()
-		if current_hour < start_time or current_hour > end_time:
+		if current_hour < start_time or current_hour >= end_time:
 			clear_LEDs()
 			continue
 		
