@@ -66,7 +66,12 @@ def get_BTC_exchange_rate():
 	response_string = response.text
 
 	# extract exchange rate from response
-	noisy_data = response_string.split(JSON_EXCHANGE_RATE_KEY)[2]
+	try:
+		noisy_data = response_string.split(JSON_EXCHANGE_RATE_KEY)[2]
+	except IndexError:
+		print("WARNING: INDEX ERROR ENCOUNTERED")
+		print("DATA: " + response_string)
+		return -1
 	number_encountered = False
 	startIndex = -1
 	endIndex = -1
